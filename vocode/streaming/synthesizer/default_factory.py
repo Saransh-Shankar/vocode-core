@@ -2,6 +2,7 @@ from typing import Type
 
 from vocode.streaming.models.synthesizer import (
     AzureSynthesizerConfig,
+    CambaiVertexSynthesizerConfig,
     CartesiaSynthesizerConfig,
     ElevenLabsSynthesizerConfig,
     PlayHtSynthesizerConfig,
@@ -12,6 +13,7 @@ from vocode.streaming.models.synthesizer import (
 from vocode.streaming.synthesizer.abstract_factory import AbstractSynthesizerFactory
 from vocode.streaming.synthesizer.azure_synthesizer import AzureSynthesizer
 from vocode.streaming.synthesizer.base_synthesizer import BaseSynthesizer
+from vocode.streaming.synthesizer.cambai_vertex_synthesizer import CambaiVertexSynthesizer
 from vocode.streaming.synthesizer.cartesia_synthesizer import CartesiaSynthesizer
 from vocode.streaming.synthesizer.eleven_labs_synthesizer import ElevenLabsSynthesizer
 from vocode.streaming.synthesizer.eleven_labs_websocket_synthesizer import ElevenLabsWSSynthesizer
@@ -28,6 +30,8 @@ class DefaultSynthesizerFactory(AbstractSynthesizerFactory):
     ):
         if isinstance(synthesizer_config, AzureSynthesizerConfig):
             return AzureSynthesizer(synthesizer_config)
+        elif isinstance(synthesizer_config, CambaiVertexSynthesizerConfig):
+            return CambaiVertexSynthesizer(synthesizer_config)
         elif isinstance(synthesizer_config, CartesiaSynthesizerConfig):
             return CartesiaSynthesizer(synthesizer_config)
         elif isinstance(synthesizer_config, ElevenLabsSynthesizerConfig):
