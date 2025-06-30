@@ -143,7 +143,7 @@ class CambaiVertexSynthesizer(BaseSynthesizer[CambaiVertexSynthesizerConfig]):
             # Prepare request data
             data = {"instances": [instances]}
             
-            # Make async prediction
+            # Make async prediction using raw_predict in executor
             loop = asyncio.get_event_loop()
             response = await loop.run_in_executor(
                 None,
@@ -169,20 +169,18 @@ class CambaiVertexSynthesizer(BaseSynthesizer[CambaiVertexSynthesizerConfig]):
         """Convert FLAC audio to required format and sample rate"""
         try:
             # Write FLAC bytes to temporary file
-            with tempfile.NamedTemporaryFile(suffix=".flac", delete=False) as temp_flac:
+            with tempfile.NamedTemporaryFile(suffix=".flac", delete=True) as temp_flac:
                 temp_flac.write(flac_audio_bytes)
                 temp_flac_path = temp_flac.name
             
-            try:
                 # Read FLAC and get audio data
                 audio_data, original_sample_rate = sf.read(temp_flac_path)
-                
+                    
                 # Write to temporary WAV file
-                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_wav:
+                with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as temp_wav:
                     sf.write(temp_wav.name, audio_data, original_sample_rate, format='WAV')
                     temp_wav_path = temp_wav.name
                 
-                try:
                     # Convert to required format using vocode's utility
                     converted_audio = convert_wav(
                         temp_wav_path,
@@ -193,15 +191,6 @@ class CambaiVertexSynthesizer(BaseSynthesizer[CambaiVertexSynthesizerConfig]):
                     logger.debug(f"Converted audio: {len(converted_audio)} bytes at {self.synthesizer_config.sampling_rate}Hz")
                     return converted_audio
                     
-                finally:
-                    # Clean up temporary WAV file
-                    if os.path.exists(temp_wav_path):
-                        os.unlink(temp_wav_path)
-                        
-            finally:
-                # Clean up temporary FLAC file
-                if os.path.exists(temp_flac_path):
-                    os.unlink(temp_flac_path)
                     
         except Exception as e:
             logger.error(f"Audio conversion failed: {str(e)}")
