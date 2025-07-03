@@ -2,8 +2,8 @@ import asyncio
 import base64
 import json
 import os
-import tempfile
 from typing import Optional
+import io
 
 import soundfile as sf
 from google.cloud import aiplatform
@@ -159,29 +159,24 @@ class CambaiVertexSynthesizer(BaseSynthesizer[CambaiVertexSynthesizerConfig]):
     async def _convert_audio_format(self, flac_audio_bytes: bytes) -> bytes:
         """Convert FLAC audio to required format and sample rate"""
         try:
-            # Write FLAC bytes to temporary file
-            with tempfile.NamedTemporaryFile(suffix=".flac", delete=True) as temp_flac:
-                temp_flac.write(flac_audio_bytes)
-                temp_flac_path = temp_flac.name
+            # Read FLAC data from BytesIO
+            flac_buffer = io.BytesIO(flac_audio_bytes)
+            audio_data, original_sample_rate = sf.read(flac_buffer)
             
-                # Read FLAC and get audio data
-                audio_data, original_sample_rate = sf.read(temp_flac_path)
-                    
-                # Write to temporary WAV file
-                with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as temp_wav:
-                    sf.write(temp_wav.name, audio_data, original_sample_rate, format='WAV')
-                    temp_wav_path = temp_wav.name
-                
-                    # Convert to required format using vocode's utility
-                    converted_audio = convert_wav(
-                        temp_wav_path,
-                        output_sample_rate=self.synthesizer_config.sampling_rate,
-                        output_encoding=self.synthesizer_config.audio_encoding,
-                    )
-                    
-                    logger.debug(f"Converted audio: {len(converted_audio)} bytes at {self.synthesizer_config.sampling_rate}Hz")
-                    return converted_audio
-                    
+            # Write to WAV BytesIO
+            wav_buffer = io.BytesIO()
+            sf.write(wav_buffer, audio_data, original_sample_rate, format='WAV')
+            wav_buffer.seek(0)
+            
+            # Convert to required format using vocode's utility
+            converted_audio = convert_wav(
+                wav_buffer,
+                output_sample_rate=self.synthesizer_config.sampling_rate,
+                output_encoding=self.synthesizer_config.audio_encoding,
+            )
+            
+            logger.debug(f"Converted audio: {len(converted_audio)} bytes at {self.synthesizer_config.sampling_rate}Hz")
+            return converted_audio
                     
         except Exception as e:
             logger.error(f"Audio conversion failed: {str(e)}")
