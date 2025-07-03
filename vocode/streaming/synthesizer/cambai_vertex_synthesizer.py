@@ -143,19 +143,10 @@ class CambaiVertexSynthesizer(BaseSynthesizer[CambaiVertexSynthesizerConfig]):
             # Prepare request data
             data = {"instances": [instances]}
             
-            # Make async prediction using raw_predict in executor
-            loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
-                None,
-                lambda: endpoint.raw_predict(
-                    body=json.dumps(data).encode("utf-8"),
-                    headers={"Content-Type": "application/json"}
-                )
-            )
+            response = await endpoint.predict_async(instances=[instances])
             
             # Extract audio from response
-            response_data = json.loads(response.content)
-            audio_base64 = response_data["predictions"][0]
+            audio_base64 = response.predictions[0]
             audio_bytes = base64.b64decode(audio_base64)
             
             logger.debug(f"Received {len(audio_bytes)} bytes of audio from MARS7")
