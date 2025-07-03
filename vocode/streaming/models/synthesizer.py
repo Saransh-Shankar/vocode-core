@@ -25,6 +25,7 @@ class SynthesizerType(str, Enum):
     BARK = "synthesizer_bark"
     POLLY = "synthesizer_polly"
     CARTESIA = "synthesizer_cartesia"
+    CAMBAI_VERTEX = "synthesizer_cambai_vertex"
 
 
 class SentimentConfig(BaseModel):
@@ -245,3 +246,31 @@ class CartesiaSynthesizerConfig(SynthesizerConfig, type=SynthesizerType.CARTESIA
     model_id: str = DEFAULT_CARTESIA_MODEL_ID
     voice_id: str = DEFAULT_CARTESIA_VOICE_ID
     experimental_voice_controls: Optional[CartesiaVoiceControls] = None
+
+
+DEFAULT_CAMBAI_VERTEX_LOCATION = "us-central1"
+DEFAULT_CAMBAI_VERTEX_LANGUAGE = "en-us"
+
+# MARS7 supported languages based on CAMB.AI specifications
+Mars7Language = Literal[
+    "de-de",   # German (Germany)
+    "en-gb",   # English (United Kingdom)
+    "en-us",   # English (United States)
+    "es-us",   # Spanish (United States)
+    "es-es",   # Spanish (Spain)
+    "fr-ca",   # French (Canada)
+    "fr-fr",   # French (France)
+    "ja-jp",   # Japanese (Japan)
+    "ko-kr",   # Korean (South Korea)
+    "zh-cn",   # Mandarin (China)
+]
+
+
+class CambaiVertexSynthesizerConfig(SynthesizerConfig, type=SynthesizerType.CAMBAI_VERTEX.value):  # type: ignore
+    credentials_path: Optional[str] = None
+    project_id: str
+    location: str = DEFAULT_CAMBAI_VERTEX_LOCATION
+    endpoint_id: str
+    reference_audio_path: str
+    reference_text: Optional[str] = None
+    language: Mars7Language = DEFAULT_CAMBAI_VERTEX_LANGUAGE
